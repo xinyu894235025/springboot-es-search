@@ -61,7 +61,7 @@ public class ESRepository extends BaseRepository{
 	/**
 	 * 增加文档，测试用的- 增加文档
 	 *
-	 * @param post
+	 * @param postId
 	 * @return
 	 * @throws Exception
 	 */
@@ -347,6 +347,7 @@ public class ESRepository extends BaseRepository{
 	 * @param index
 	 * @return
 	 */
+	@Override
 	public boolean isIndexExist(String index) {
 		IndicesExistsResponse iep = client.admin().indices().exists(new IndicesExistsRequest(index)).actionGet();
 		if (iep.isExists()) {
@@ -462,7 +463,7 @@ public class ESRepository extends BaseRepository{
      * @param index 索引，库
      * @param limit
      * @param offset
-     * @param filed 字段
+     * @param filedMap 字段
      * @return
      * @throws Exception
      */
@@ -494,9 +495,7 @@ public class ESRepository extends BaseRepository{
      * 根据关键词查询  获取总数
      * @param filedMap 搜索关键词Map key 是要搜索的字段 value是关键词
      * @param index 索引，库
-     * @param limit
-     * @param offset
-     * @param filed 字段
+     * @param filedMap 字段
      * @return
      * @throws Exception
      */
