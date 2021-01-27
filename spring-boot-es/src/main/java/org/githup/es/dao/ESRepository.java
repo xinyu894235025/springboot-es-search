@@ -44,9 +44,9 @@ import com.alibaba.fastjson.JSONObject;
 
 /**
  * ES的操作数据类
- * 
+ *
  * 备注：对es的一些操作做了一些封装，抽出来一些操作，就是传统的dao层，数据服务
- * 
+ *
  * @author sdc
  *
  */
@@ -57,19 +57,20 @@ public class ESRepository extends BaseRepository{
 
 	@Autowired
 	private TransportClient client;
-	
+
 	/**
 	 * 增加文档，测试用的- 增加文档
-	 * 
+	 *
 	 * @param post
 	 * @return
 	 * @throws Exception
 	 */
+	@Override
 	public int addPostDataDoc(String postId, String postContent) throws Exception {
 		IndexResponse response = client.prepareIndex("forum_index", "post").setSource(XContentFactory.jsonBuilder().startObject().field("id", postId).field("content", postContent).endObject()).get();
 		return response.hashCode();
 	}
-	
+
 	/**
 	 * 搜索
 	 * @param param
@@ -80,22 +81,22 @@ public class ESRepository extends BaseRepository{
 		String keyWord = param.getKeyWord();
 		String filed = param.getField();
 		String index = param.getIndex();
-		
+
 		Assert.assertNotNull(client);
 		Assert.assertNotNull(filed);
 		Assert.assertNotNull(index);
 		Assert.assertNotNull(keyWord);
-		
+
 		//校验索引是否成功
 		if (!isIndexExist(index)) {
 			return null;
 		}
-		
+
 		//响应信息
     	List<String> responseStrList = new ArrayList<String>();
     	//去重的信息
     	CollapseBuilder cb = new CollapseBuilder(param.getDistictField());
-    	
+
 		MatchQueryBuilder matchQueryBuilder = QueryBuilders.matchQuery(filed, keyWord);
 		//查询
 		SearchResponse response = client.prepareSearch(index)
@@ -104,14 +105,14 @@ public class ESRepository extends BaseRepository{
 										.setFrom(param.getOffset())
 										.setSize(param.getLimit())
 										.get();
-		
+
 		SearchHits shList = response.getHits();
-		for (SearchHit searchHit : shList) {  
+		for (SearchHit searchHit : shList) {
         	responseStrList.add(searchHit.getSourceAsString());
-        }  
+        }
 		return responseStrList;
 	}
-	
+
 	/**
 	 * 搜索
 	 * @param param
@@ -122,33 +123,33 @@ public class ESRepository extends BaseRepository{
 		String keyWord = param.getKeyWord();
 		String filed = param.getField();
 		String index = param.getIndex();
-		
+
 		Assert.assertNotNull(client);
 		Assert.assertNotNull(filed);
 		Assert.assertNotNull(index);
 		Assert.assertNotNull(keyWord);
-		
+
 		//校验索引是否成功
 		if (!isIndexExist(index)) {
 			return null;
 		}
-		
+
     	//去重的信息
     	CollapseBuilder cb = new CollapseBuilder(param.getDistictField());
-    	
+
 		MatchQueryBuilder matchQueryBuilder = QueryBuilders.matchQuery(filed, keyWord);
 		SearchResponse response = client.prepareSearch(index)
 								.setQuery(matchQueryBuilder)
 								.setCollapse(cb)
 								.get();
-		
+
 		SearchHits shList = response.getHits();
 		return shList.totalHits;
 	}
 
 	/**
 	 * 查询
-	 * 
+	 *
 	 * @param keyWord
 	 * @param index
 	 * @param limit
@@ -167,18 +168,18 @@ public class ESRepository extends BaseRepository{
 
 	/**
 	 * 批量查询
-	 * 
+	 *
 	 * 备注： 1、批量查询是再你知道下面的属性的时候，才去批量查询，如果都不知道Index，type就 直接查询，那个是ES搜索，不是批量查询
 	 * 2、批量查询能提高程序查询效率，根据需求自我添加
-	 * 
+	 *
 	 * Item 类结构里有属性，index<==>_index，type<==>_type,id<==>_id
-	 * 
+	 *
 	 * 下面是es文档结构 { "_index": "bond2018-03-15", "_type": "bond", "_id":
 	 * "AWIoxzdzUfSIA3djz-ZK", "_score": 1, "_source": { "code": "130523",
 	 * "@timestamp": "2018-03-15T16:29:27.214Z", "name": "15福建09", "@version":
 	 * "1", "id": 13293, "type": "bond", "tags": [ ], "timestamp":
 	 * "2018-03-15T16:29:27.214Z" } }
-	 * 
+	 *
 	 * @param itemList
 	 * @return
 	 */
@@ -198,7 +199,7 @@ public class ESRepository extends BaseRepository{
 
 	/**
 	 * 用户添加索引数据文档
-	 * 
+	 *
 	 * @param index
 	 *            对应的数据库
 	 * @param type
@@ -240,7 +241,7 @@ public class ESRepository extends BaseRepository{
 
 	/**
 	 * 查询数据
-	 * 
+	 *
 	 * @param index
 	 *            索引<----->关系型数据库
 	 * @param type
@@ -316,7 +317,7 @@ public class ESRepository extends BaseRepository{
 
 		return response.getId();
 	}
-	
+
 	/**
 	 * JSON字符串加入到es里
 	 * @param index
@@ -325,20 +326,20 @@ public class ESRepository extends BaseRepository{
 	 * @return
 	 * @throws Exception
 	 */
-	public String addJSONDataDoc(String index, String type, Object obj) throws Exception{  
+	public String addJSONDataDoc(String index, String type, Object obj) throws Exception{
     	//构建参数和需要属性
     	Assert.assertNotNull(client);
     	Assert.assertNotNull(index);
     	Assert.assertNotNull(type);
 
         client.prepareIndex().setIndex(index).setType(type).setSource();
-        
+
         //返回数据来源
         IndexResponse indexResponse = client.prepareIndex().setIndex(index).setType(type)
                 .setSource(JSONObject.toJSONString(obj), XContentType.JSON).get();
         LOG.debug("添加document，index:" + index + ",type:" + type + ",目标类obj:" + JSONObject.toJSONString(obj));
         return indexResponse.getId();
-    } 
+    }
 
 	/**
 	 * 判断索引是否存在
@@ -358,7 +359,7 @@ public class ESRepository extends BaseRepository{
 
 	/**
 	 * 根据关键词查询
-	 * 
+	 *
 	 * @param keyWord
 	 *            搜索词
 	 * @param index
@@ -379,7 +380,7 @@ public class ESRepository extends BaseRepository{
 		}
 		return responseStrList;
 	}
-	
+
 	 /**
 	 * @param index
 	 * @param filed
@@ -388,22 +389,22 @@ public class ESRepository extends BaseRepository{
 	 * @param offset
 	 * @return
 	 */
-	public List<String> search_IdByKeyWord(String index, String filed, String keyWord, int limit, int offset) {  
+	public List<String> search_IdByKeyWord(String index, String filed, String keyWord, int limit, int offset) {
 		LOG.debug("es serarch index->" + index + ",filed->" + filed + ",keyWord->" + keyWord);
     	Assert.assertNotNull(client);
     	Assert.assertNotNull(index);
     	Assert.assertNotNull(keyWord);
     	List<String> responseStrList = new ArrayList<String>();
 		MatchQueryBuilder matchQueryBuilder = QueryBuilders.matchQuery(filed, keyWord);
-		
+
 		SearchResponse response = client.prepareSearch(index).setQuery(matchQueryBuilder).setFrom(offset).setSize(limit).get();
-		
-        for (SearchHit searchHit : response.getHits()) {  
+
+        for (SearchHit searchHit : response.getHits()) {
         	responseStrList.add(searchHit.getId());
-        }  
+        }
         return responseStrList;
     }
-	
+
 	/**
      * 根据关键词查询,使用的查询市term_query
 	 * @param index
@@ -414,22 +415,22 @@ public class ESRepository extends BaseRepository{
 	 * @return
 	 */
 	public List<String> searchMessageTermQueryByKeyWord(String index, String filed, String keyWord, int limit,
-			int offset) {  
+			int offset) {
 		LOG.info("es serarch index->" + index + ",filed->" + filed + ",keyWord->" + keyWord);
     	Assert.assertNotNull(client);
     	Assert.assertNotNull(index);
     	Assert.assertNotNull(keyWord);
     	List<String> responseStrList = new ArrayList<String>();
     	TermsQueryBuilder termsQueryBuilder = QueryBuilders.termsQuery(filed, keyWord);
-		
+
     	//查询信息
 		SearchResponse response = client.prepareSearch(index).setQuery(termsQueryBuilder).setFrom(offset).setSize(limit).get();
-        for (SearchHit searchHit : response.getHits()) {  
+        for (SearchHit searchHit : response.getHits()) {
         	responseStrList.add(searchHit.getSourceAsString());
-        }  
+        }
         return responseStrList;
     }
-	
+
 	/**
      * 根据关键词查询,使用的查询是match_phrase
 	 * @param index
@@ -440,21 +441,21 @@ public class ESRepository extends BaseRepository{
 	 * @return
 	 */
 	public List<String> searchMessageMatchPhraseQueryByKeyWord(String index, String filed, String keyWord, int limit,
-			int offset) {  
+			int offset) {
 		LOG.info("es serarch index->" + index + ",filed->" + filed + ",keyWord->" + keyWord);
     	Assert.assertNotNull(client);
     	Assert.assertNotNull(index);
     	Assert.assertNotNull(keyWord);
     	List<String> responseStrList = new ArrayList<String>();
     	MatchPhraseQueryBuilder matchPhraseQueryBuilder = QueryBuilders.matchPhraseQuery(filed, keyWord);
-		
+
 		SearchResponse response = client.prepareSearch(index).setQuery(matchPhraseQueryBuilder).setFrom(offset).setSize(limit).get();
-        for (SearchHit searchHit : response.getHits()) {  
+        for (SearchHit searchHit : response.getHits()) {
         	responseStrList.add(searchHit.getSourceAsString());
-        }  
+        }
         return responseStrList;
     }
-    
+
     /**
      * 根据关键词查询  分页查询
      * @param filedMap 搜索关键词Map key 是要搜索的字段 value是关键词
@@ -465,30 +466,30 @@ public class ESRepository extends BaseRepository{
      * @return
      * @throws Exception
      */
-    public List<String> searchMessageByMapKeyWord(String index, Map<String, String> filedMap, int limit, int offset) throws Exception{  
+    public List<String> searchMessageByMapKeyWord(String index, Map<String, String> filedMap, int limit, int offset) throws Exception{
     	LOG.info("es serarch index->" + index + ",filedMap->" + JSONObject.toJSONString(filedMap));
     	Assert.assertNotNull(client);
     	Assert.assertNotNull(index);
     	List<String> responseStrList = new ArrayList<String>();
-		
+
     	QueryBuilder finalQueryBuilder = null;
     	if(!CollectionUtils.isEmpty(filedMap)) {
     		for(Map.Entry<String, String> entry : filedMap.entrySet()) {
     			String key = entry.getKey(); //key 是要搜索的字段
     			String value = entry.getValue();//value是关键词
-    			
+
     			TermQueryBuilder termQueryBuilder1 = QueryBuilders.termQuery(key, value);
     			finalQueryBuilder = QueryBuilders.boolQuery().must(termQueryBuilder1);
     		}
     	}
     	//query
-		SearchResponse response = client.prepareSearch(index).setQuery(finalQueryBuilder).setFrom(offset).setSize(limit).get();  
-        for (SearchHit searchHit : response.getHits()) {  
+		SearchResponse response = client.prepareSearch(index).setQuery(finalQueryBuilder).setFrom(offset).setSize(limit).get();
+        for (SearchHit searchHit : response.getHits()) {
         	responseStrList.add(searchHit.getSourceAsString());
-        }  
+        }
         return responseStrList;
-    } 
-    
+    }
+
     /**
      * 根据关键词查询  获取总数
      * @param filedMap 搜索关键词Map key 是要搜索的字段 value是关键词
@@ -499,7 +500,7 @@ public class ESRepository extends BaseRepository{
      * @return
      * @throws Exception
      */
-    public long searchMessageByMapKeyWordCount(String index, Map<String, String> filedMap) throws Exception{  
+    public long searchMessageByMapKeyWordCount(String index, Map<String, String> filedMap) throws Exception{
     	LOG.info("es serarch index->" + index + ",filedMap->" + filedMap);
     	Assert.assertNotNull(client);
     	Assert.assertNotNull(index);
@@ -508,14 +509,14 @@ public class ESRepository extends BaseRepository{
     		for(Map.Entry<String, String> entry : filedMap.entrySet()) {
     			String key = entry.getKey(); //key 是要搜索的字段
     			String value = entry.getValue();//value是关键词
-    			
+
     			TermQueryBuilder termQueryBuilder1 = QueryBuilders.termQuery(key, value);
     			finalQueryBuilder = QueryBuilders.boolQuery().must(termQueryBuilder1);
     		}
     	}
     	long count = client.prepareSearch(index).setQuery(finalQueryBuilder).get().getHits().totalHits;
     	return count;
-    } 
+    }
 
 	public List<String> searchMessageByKeyWord(String index, String filed, String keyWord, int limit, int offset) throws Exception {
 		List<String> responseStrList = new ArrayList<String>();
@@ -524,11 +525,11 @@ public class ESRepository extends BaseRepository{
 		QueryBuilder finalQueryBuilder = QueryBuilders.boolQuery().must(matchQueryBuilder).must(termQueryBuilder);
 
 		SearchResponse response = client.prepareSearch(index).setQuery(finalQueryBuilder).setFrom(offset).setSize(limit).get();
-		
+
 		for (SearchHit searchHit : response.getHits()) {
 			responseStrList.add(searchHit.getSourceAsString());
 		}
 		return responseStrList;
 	}
-	
+
 }

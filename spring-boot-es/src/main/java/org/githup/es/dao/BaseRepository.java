@@ -14,9 +14,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * ES的操作数据类
- * 
+ *
  * 备注：对es的一些操作做了一些封装，抽出来一些操作，就是传统的dao层，数据服务
- * 
+ *
  * @author sdc
  *
  */
@@ -27,7 +27,7 @@ public class BaseRepository {
 
 	@Autowired
 	private TransportClient client;
-	
+
 	/**
 	 * 创建索引
 	 *
@@ -46,8 +46,8 @@ public class BaseRepository {
 
 	/**
 	 * 增加文档，测试用的- 增加文档
-	 * 
-	 * @param post
+	 *
+	 * @param postId
 	 * @return
 	 * @throws Exception
 	 */
